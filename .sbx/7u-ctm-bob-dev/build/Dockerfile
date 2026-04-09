@@ -20,8 +20,8 @@ ARG __supplemental_cp_dir=/cp
 ARG __maven_repo_dir=${__user_home}/.m2
 ARG __license_monitor_dir=${__workspace_home}/code/java/license-monitor
 
-ENV GG_USER_HOME=${__user_home} \
-    GG_THIS_REPO_HOME=${__workspace_home} \
+ENV 7U_CTM_USER_HOME=${__user_home} \
+    7U_CTM_WORKSPACE=${__workspace_home} \
     MAVEN_CONFIG=${__maven_repo_dir}
 
 RUN addgroup -g ${__gid} ${__gname} \

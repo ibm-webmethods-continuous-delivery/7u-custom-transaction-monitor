@@ -22,8 +22,7 @@
         "eamodio.gitlens",
         "mhutchie.git-graph",
         "oderwat.indent-rainbow",
-        "redhat.java",
-        "vscjava.vscode-maven"
+        "vscjava.vscode-java-pack"
       ]
     }
   }

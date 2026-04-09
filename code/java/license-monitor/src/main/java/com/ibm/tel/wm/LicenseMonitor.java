@@ -63,6 +63,15 @@ public class LicenseMonitor {
     public ServiceMetrics getMetrics(String serviceNS) {
         return metricsMap.get(serviceNS);
     }
+
+    /**
+     * Gets all tracked service namespaces.
+     *
+     * @return an array containing all tracked service namespace keys
+     */
+    public String[] getServiceNamespaces() {
+        return metricsMap.keySet().toArray(new String[0]);
+    }
     
     /**
      * Clears all metrics. Useful for testing.

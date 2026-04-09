@@ -17,6 +17,22 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>com.softwareag.wm</groupId>
+            <artifactId>wm-isserver</artifactId>
+            <version>10.0</version>
+            <scope>system</scope>
+            <systemPath>/cp/wm-isserver.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.softwareag.wm</groupId>
+            <artifactId>wm-isclient</artifactId>
+            <version>10.0</version>
+            <scope>system</scope>
+            <systemPath>/cp/wm-isclient.jar</systemPath>
+        </dependency>
+
         <!-- JUnit 5 for testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -74,10 +90,10 @@
                         </goals>
                         <configuration>
                             <target>
-                                <mkdir dir="/7u-ctm-bob/code/is-packages/ZzLicMon/code/jars/static"/>
+                                <mkdir dir="${env.7U_CTM_WORKSPACE}/code/is-packages/ZzLicMon/code/jars/static"/>
                                 <copy
                                     file="${project.build.directory}/${project.build.finalName}.jar"
-                                    todir="/7u-ctm-bob/code/is-packages/ZzLicMon/code/jars/static"
+                                    todir="${env.7U_CTM_WORKSPACE}/code/is-packages/ZzLicMon/code/jars/static"
                                     overwrite="true"/>
                             </target>
                         </configuration>
@@ -93,7 +109,7 @@
                 <configuration>
                     <filesets>
                         <fileset>
-                            <directory>/7u-ctm-bob/code/is-packages/ZzLicMon/code/jars/static</directory>
+                            <directory>${env.7U_CTM_WORKSPACE}/code/is-packages/ZzLicMon/code/jars/static</directory>
                             <includes>
                                 <include>license-monitor*.jar</include>
                             </includes>

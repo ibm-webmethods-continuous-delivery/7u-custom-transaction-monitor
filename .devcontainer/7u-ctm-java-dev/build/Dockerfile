@@ -18,10 +18,11 @@ ARG __workspace_home=/work
 ARG __user_home=/home/${__uname}
 ARG __supplemental_cp_dir=/cp
 
-ENV GG_USER_HOME=${__user_home} \
-    GG_THIS_REPO_HOME=${__workspace_home}
+ENV 7U_CTM_USER_HOME=${__user_home} \
+    7U_CTM_WORKSPACE=${__workspace_home}
 
-RUN addgroup -g ${__gid} ${__gname} \
+RUN apk --no-cache add openjdk21 \
+    && addgroup -g ${__gid} ${__gname} \
     && mkdir -p \
       "${__supplemental_cp_dir}" \
       "${__user_home}" \
