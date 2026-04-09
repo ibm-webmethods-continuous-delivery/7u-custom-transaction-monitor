@@ -1,0 +1,30 @@
+{
+  "name": "7u-ctm-java-dev",
+  // keep this synced to the .env file manually. TODO: find a way to keep them synced automatically
+  "workspaceFolder": "/7u-ctm",
+  "dockerComposeFile": [
+    "./docker-compose.yml"
+  ],
+  "service": "7u-ctm-java-dev",
+  "shutdownAction": "none",
+  "customizations": {
+    // Configure properties specific to VS Code.
+    "vscode": {
+      // Set *default* container specific settings.json values on container create.
+      "settings": {
+        "editor.formatOnSave": true,
+        "files.insertFinalNewline": true,
+        "workbench.colorTheme": "Dark Purple Flat"
+      },
+      // Add the IDs of extensions you want installed when the container is created.
+      "extensions": [
+        "dotenv.dotenv-vscode",
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        "oderwat.indent-rainbow",
+        "redhat.java",
+        "vscjava.vscode-maven"
+      ]
+    }
+  }
+}

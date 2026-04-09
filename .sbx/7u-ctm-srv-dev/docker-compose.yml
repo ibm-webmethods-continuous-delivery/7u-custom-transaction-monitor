@@ -1,0 +1,22 @@
+services:
+  msr:
+    image: my-quick-msr-dev-image
+    build:
+      context: ./build
+      args:
+        - __ibm_wm_msr_image=${CONTAINER_IMAGE}:${CONTAINER_IMAGE_TAG}
+    ports:
+      - ${HOST_PORT_PREFIX}55:5555
+    volumes:
+      # uncomment for versions previous to 11
+      # - ${HOST_MSR_LICENSE_FILE}:${GUEST_LICENSE_FILE_MOUNT_POINT}
+      - ./application.properties:${GUEST_APP_PROPS_MOUNT_POINT}
+      # Our Code
+      - ../../code/is-packages/ZZLicMon/:${GUEST_IS_HOME}/packages/ZZLicMon/
+    environment:
+      # uncomment for versions previous to 11
+      # - SAG_IS_LICENSE_FILE=${GUEST_LICENSE_FILE_MOUNT_POINT}
+      - SAG_IS_CONFIG_PROPERTIES=${GUEST_APP_PROPS_MOUNT_POINT}
+      - GUEST_IS_HOME
+      - IS_ADMIN_PWD
+

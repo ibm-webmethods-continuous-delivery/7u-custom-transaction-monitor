@@ -1,0 +1,21 @@
+services:
+  7u-ctm-java-bob-dev:
+    image: 7u-ctm-java-bob-dev
+    container_name: 7u-ctm-java-bob-dev
+    hostname: 7u-ctm-java-bob-dev
+    build:
+      context: ./build
+      args:
+        - __workspace_home=${WORKSPACE_FOLDER}
+        - __user_home=/mnt/user-home
+    read_only: true
+    volumes:
+      - ../../:/${WORKSPACE_FOLDER}/
+      - uhome:/mnt/user-home
+      - tmp:/tmp
+    command: [ sleep, infinity ]
+    environment:
+      - BOBSHELL_API_KEY
+volumes:
+  uhome: {}
+  tmp: {}

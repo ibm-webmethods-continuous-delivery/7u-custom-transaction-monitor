@@ -1,0 +1,12 @@
+services:
+  7u-ctm-java-dev:
+    image: 7u-ctm-java-dev
+    container_name: 7u-ctm-java-dev
+    hostname: 7u-ctm-java-dev
+    build:
+      context: ./build
+      args:
+        - __workspace_home=${WORKSPACE_FOLDER}
+    volumes:
+      - ../../:/${WORKSPACE_FOLDER}/
+    command: [ sleep, infinity ]
