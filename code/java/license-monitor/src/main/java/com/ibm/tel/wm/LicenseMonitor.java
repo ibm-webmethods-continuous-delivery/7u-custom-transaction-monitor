@@ -7,8 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.wm.util.JournalLogger;
 
 /**
  * Singleton class for monitoring service license metrics.
@@ -16,8 +15,6 @@ import java.util.logging.Logger;
  */
 public class LicenseMonitor {
     
-    private static final Logger LOGGER = Logger.getLogger(LicenseMonitor.class.getName());
-
     private static final long initMillis = System.currentTimeMillis();
     
     // Singleton instance - initialized at class loading time
@@ -159,9 +156,11 @@ public class LicenseMonitor {
         if (parentDir != null && !Files.exists(parentDir)) {
             try {
                 Files.createDirectories(parentDir);
-                LOGGER.log(Level.INFO, "Created directory: {0}", parentDir);
+                JournalLogger.logInfo(JournalLogger.LOG_EXCEPTION, JournalLogger.FAC_LICENSE_MGR,
+                    "Created directory: " + parentDir);
             } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Failed to create directory: " + parentDir, e);
+                JournalLogger.logInfo(JournalLogger.LOG_MSG, JournalLogger.FAC_LICENSE_MGR,
+                    "Failed to create directory: " + parentDir + " - " + e.getMessage());
                 throw new IOException("Failed to create directory: " + parentDir, e);
             }
         }
@@ -172,9 +171,11 @@ public class LicenseMonitor {
         // Write to file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             writer.write(csvContent);
-            LOGGER.log(Level.INFO, "Successfully exported metrics to: {0}", filePath);
+            JournalLogger.logInfo(JournalLogger.LOG_EXCEPTION, JournalLogger.FAC_LICENSE_MGR,
+                "Successfully exported metrics to: " + filePath);
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to write CSV to file: " + filePath, e);
+            JournalLogger.logInfo(JournalLogger.LOG_MSG, JournalLogger.FAC_LICENSE_MGR,
+                "Failed to write CSV to file: " + filePath + " - " + e.getMessage());
             throw new IOException("Failed to write CSV to file: " + filePath, e);
         }
     }
