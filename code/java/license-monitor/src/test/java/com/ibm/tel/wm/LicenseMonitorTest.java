@@ -3,6 +3,10 @@ package com.ibm.tel.wm;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -66,7 +70,7 @@ class LicenseMonitorTest {
         
         assertNull(monitor.getMetrics(serviceNS), "Metrics should not exist initially");
         
-        monitor.incrementMetrics(serviceNS, 5, 3);
+        monitor.incrementMetrics(serviceNS, 5, 3, 100L);
         
         ServiceMetrics metrics = monitor.getMetrics(serviceNS);
         assertNotNull(metrics, "Metrics should be created after increment");
@@ -78,8 +82,8 @@ class LicenseMonitorTest {
     void testIncrementMetricsUpdatesExistingEntry() {
         String serviceNS = "test.service";
         
-        monitor.incrementMetrics(serviceNS, 5, 3);
-        monitor.incrementMetrics(serviceNS, 2, 7);
+        monitor.incrementMetrics(serviceNS, 5, 3, 100L);
+        monitor.incrementMetrics(serviceNS, 2, 7, 200L);
         
         ServiceMetrics metrics = monitor.getMetrics(serviceNS);
         assertNotNull(metrics, "Metrics should exist");
@@ -90,15 +94,15 @@ class LicenseMonitorTest {
     @Test
     void testIncrementMetricsWithNullServiceNS() {
         assertThrows(IllegalArgumentException.class, 
-            () -> monitor.incrementMetrics(null, 1, 1),
+            () -> monitor.incrementMetrics(null, 1, 1, 100L),
             "Should throw IllegalArgumentException for null serviceNS");
     }
 
     @Test
     void testMultipleServiceNamespaces() {
-        monitor.incrementMetrics("service1", 10, 20);
-        monitor.incrementMetrics("service2", 30, 40);
-        monitor.incrementMetrics("service3", 50, 60);
+        monitor.incrementMetrics("service1", 10, 20, 100L);
+        monitor.incrementMetrics("service2", 30, 40, 200L);
+        monitor.incrementMetrics("service3", 50, 60, 300L);
 
         ServiceMetrics metrics1 = monitor.getMetrics("service1");
         ServiceMetrics metrics2 = monitor.getMetrics("service2");
@@ -128,7 +132,7 @@ class LicenseMonitorTest {
             executor.submit(() -> {
                 try {
                     for (int j = 0; j < incrementsPerThread; j++) {
-                        monitor.incrementMetrics(serviceNS, 1, 2);
+                        monitor.incrementMetrics(serviceNS, 1, 2, 50L);
                     }
                 } finally {
                     latch.countDown();
@@ -165,7 +169,7 @@ class LicenseMonitorTest {
                 try {
                     int serviceIndex = counter.getAndIncrement() % serviceCount;
                     String serviceNS = "service." + serviceIndex;
-                    monitor.incrementMetrics(serviceNS, 1, 1);
+                    monitor.incrementMetrics(serviceNS, 1, 1, 100L);
                 } finally {
                     latch.countDown();
                 }
@@ -202,7 +206,7 @@ class LicenseMonitorTest {
                 try {
                     // Some threads increment, some read
                     if (threadId % 2 == 0) {
-                        monitor.incrementMetrics(serviceNS, threadId, threadId * 2);
+                        monitor.incrementMetrics(serviceNS, threadId, threadId * 2, threadId * 10L);
                     } else {
                         ServiceMetrics metrics = monitor.getMetrics(serviceNS);
                         // Just reading, no assertion needed as it might be null initially
@@ -243,8 +247,8 @@ class LicenseMonitorTest {
 
     @Test
     void testClearAllMetrics() {
-        monitor.incrementMetrics("service1", 10, 20);
-        monitor.incrementMetrics("service2", 30, 40);
+        monitor.incrementMetrics("service1", 10, 20, 100L);
+        monitor.incrementMetrics("service2", 30, 40, 200L);
         
         assertNotNull(monitor.getMetrics("service1"));
         assertNotNull(monitor.getMetrics("service2"));
@@ -254,4 +258,111 @@ class LicenseMonitorTest {
         assertNull(monitor.getMetrics("service1"), "Metrics should be cleared");
         assertNull(monitor.getMetrics("service2"), "Metrics should be cleared");
     }
+
+    @Test
+    void testExportToCSVFile() throws IOException {
+        // Setup test data
+        monitor.incrementMetrics("service1", 10, 20, 100L);
+        monitor.incrementMetrics("service2", 30, 40, 200L);
+        
+        // Create temp file path
+        String tempDir = System.getProperty("java.io.tmpdir");
+        String filePath = tempDir + "/test-metrics-" + System.currentTimeMillis() + ".csv";
+        
+        try {
+            // Export to file
+            monitor.exportToCSVFile(filePath);
+            
+            // Verify file exists
+            Path path = Paths.get(filePath);
+            assertTrue(Files.exists(path), "CSV file should be created");
+            
+            // Read and verify content
+            String content = new String(Files.readAllBytes(path));
+            assertTrue(content.contains("ServiceNS,InvokeCount,TransactionCount"), 
+                "CSV should contain header");
+            assertTrue(content.contains("service1"), "CSV should contain service1 data");
+            assertTrue(content.contains("service2"), "CSV should contain service2 data");
+            
+        } finally {
+            // Cleanup
+            Files.deleteIfExists(Paths.get(filePath));
+        }
+    }
+
+    @Test
+    void testExportToCSVFileWithNullPath() {
+        assertThrows(IllegalArgumentException.class, 
+            () -> monitor.exportToCSVFile(null),
+            "Should throw IllegalArgumentException for null file path");
+    }
+
+    @Test
+    void testExportToCSVFileWithEmptyPath() {
+        assertThrows(IllegalArgumentException.class, 
+            () -> monitor.exportToCSVFile(""),
+            "Should throw IllegalArgumentException for empty file path");
+        
+        assertThrows(IllegalArgumentException.class, 
+            () -> monitor.exportToCSVFile("   "),
+            "Should throw IllegalArgumentException for whitespace-only file path");
+    }
+
+    @Test
+    void testExportToCSVFileCreatesParentDirectory() throws IOException {
+        // Setup test data
+        monitor.incrementMetrics("test.service", 5, 10, 150L);
+        
+        // Create path with non-existent parent directory
+        String tempDir = System.getProperty("java.io.tmpdir");
+        String subDir = "test-metrics-" + System.currentTimeMillis();
+        String filePath = tempDir + "/" + subDir + "/metrics.csv";
+        
+        try {
+            // Export to file
+            monitor.exportToCSVFile(filePath);
+            
+            // Verify file and directory exist
+            Path path = Paths.get(filePath);
+            assertTrue(Files.exists(path), "CSV file should be created");
+            assertTrue(Files.exists(path.getParent()), "Parent directory should be created");
+            
+        } finally {
+            // Cleanup
+            Path path = Paths.get(filePath);
+            Files.deleteIfExists(path);
+            if (path.getParent() != null) {
+                Files.deleteIfExists(path.getParent());
+            }
+        }
+    }
+
+    @Test
+    void testExportToCSVFileOverwritesExisting() throws IOException {
+        // Setup test data
+        monitor.incrementMetrics("service1", 10, 20, 100L);
+        
+        String tempDir = System.getProperty("java.io.tmpdir");
+        String filePath = tempDir + "/test-overwrite-" + System.currentTimeMillis() + ".csv";
+        
+        try {
+            // First export
+            monitor.exportToCSVFile(filePath);
+            String firstContent = new String(Files.readAllBytes(Paths.get(filePath)));
+            
+            // Add more data and export again
+            monitor.incrementMetrics("service2", 30, 40, 200L);
+            monitor.exportToCSVFile(filePath);
+            String secondContent = new String(Files.readAllBytes(Paths.get(filePath)));
+            
+            // Verify file was overwritten with new content
+            assertNotEquals(firstContent, secondContent, "File should be overwritten");
+            assertTrue(secondContent.contains("service2"), "New content should include service2");
+            
+        } finally {
+            // Cleanup
+            Files.deleteIfExists(Paths.get(filePath));
+        }
+    }
+
 }

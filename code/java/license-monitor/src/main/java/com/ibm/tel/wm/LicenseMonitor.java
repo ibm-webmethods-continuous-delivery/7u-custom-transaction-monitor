@@ -1,12 +1,24 @@
 package com.ibm.tel.wm;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Singleton class for monitoring service license metrics.
  * Initialized at class loading time and provides thread-safe operations.
  */
 public class LicenseMonitor {
+    
+    private static final Logger LOGGER = Logger.getLogger(LicenseMonitor.class.getName());
+
+    private static final long initMillis = System.currentTimeMillis();
     
     // Singleton instance - initialized at class loading time
     private static final LicenseMonitor INSTANCE = new LicenseMonitor();
@@ -22,6 +34,15 @@ public class LicenseMonitor {
     }
     
     /**
+     * Gets the initMillis - time counters started from zero
+     * 
+     * @return the initMillis
+     */
+    public static long getInitMillis() {
+        return initMillis;
+    }
+
+        /**
      * Gets the singleton instance.
      * 
      * @return the LicenseMonitor instance
@@ -38,8 +59,9 @@ public class LicenseMonitor {
      * @param serviceNS the service namespace key
      * @param invokeCountDelta the amount to increment invoke count
      * @param transactionCountDelta the amount to increment transaction count
+     * @param durationMillis the duration of the service call in milliseconds
      */
-    public void incrementMetrics(String serviceNS, long invokeCountDelta, long transactionCountDelta) {
+    public void incrementMetrics(String serviceNS, long invokeCountDelta, long transactionCountDelta, long durationMillis) {
         if (serviceNS == null) {
             throw new IllegalArgumentException("serviceNS cannot be null");
         }
@@ -52,6 +74,7 @@ public class LicenseMonitor {
         // using AtomicLong, so no additional synchronization needed here
         metrics.incrementInvokeCount(invokeCountDelta);
         metrics.incrementTransactionCount(transactionCountDelta);
+        metrics.updateDuration(durationMillis, transactionCountDelta, serviceNS);
     }
     
     /**
@@ -71,6 +94,105 @@ public class LicenseMonitor {
      */
     public String[] getServiceNamespaces() {
         return metricsMap.keySet().toArray(new String[0]);
+    }
+    
+    /**
+     * Exports all metrics as a CSV string.
+     * Format: ServiceNS,InvokeCount,TransactionCount,MaxDurationMillis,AvgSecondDuration,Histogram[1],Histogram[2],...,Histogram[N],Histogram[>N]
+     * 
+     * @return CSV string containing all metrics
+     */
+    public String exportToCSV() {
+        StringBuilder csv = new StringBuilder();
+        
+        // Build header
+        csv.append("ServiceNS,InvokeCount,TransactionCount,MaxDurationMillis,AvgSecondDuration");
+        
+        // Add histogram headers
+        int histogramSize = ConfigLoader.getInstance().getTransactionsHistogramCount();
+        for (int i = 1; i <= histogramSize; i++) {
+            csv.append(",Histogram[").append(i).append("]");
+        }
+        csv.append(",Histogram[>").append(histogramSize).append("]");
+        csv.append("\n");
+        
+        // Add data rows
+        String[] serviceNamespaces = getServiceNamespaces();
+        for (String serviceNS : serviceNamespaces) {
+            ServiceMetrics metrics = getMetrics(serviceNS);
+            if (metrics != null) {
+                csv.append(escapeCSV(serviceNS)).append(",");
+                csv.append(metrics.getInvokeCount()).append(",");
+                csv.append(metrics.getTransactionCount()).append(",");
+                csv.append(metrics.getMaxDurationMillis()).append(",");
+                csv.append(String.format("%.2f", metrics.getAvgSecondDuration()));
+                
+                // Add histogram data
+                long[] histogram = metrics.getHistogramArray();
+                for (long count : histogram) {
+                    csv.append(",").append(count);
+                }
+                csv.append("\n");
+            }
+        }
+        
+        return csv.toString();
+    }
+    
+    /**
+     * Exports all metrics to a CSV file.
+     * Creates parent directories if they don't exist.
+     * 
+     * @param filePath the path to the file where CSV data should be written
+     * @throws IOException if an I/O error occurs while writing the file
+     * @throws IllegalArgumentException if filePath is null or empty
+     */
+    public void exportToCSVFile(String filePath) throws IOException {
+        if (filePath == null || filePath.trim().isEmpty()) {
+            throw new IllegalArgumentException("filePath cannot be null or empty");
+        }
+        
+        Path path = Paths.get(filePath);
+        
+        // Create parent directories if they don't exist
+        Path parentDir = path.getParent();
+        if (parentDir != null && !Files.exists(parentDir)) {
+            try {
+                Files.createDirectories(parentDir);
+                LOGGER.log(Level.INFO, "Created directory: {0}", parentDir);
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Failed to create directory: " + parentDir, e);
+                throw new IOException("Failed to create directory: " + parentDir, e);
+            }
+        }
+        
+        // Get CSV content
+        String csvContent = exportToCSV();
+        
+        // Write to file
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+            writer.write(csvContent);
+            LOGGER.log(Level.INFO, "Successfully exported metrics to: {0}", filePath);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to write CSV to file: " + filePath, e);
+            throw new IOException("Failed to write CSV to file: " + filePath, e);
+        }
+    }
+    
+    /**
+     * Escapes a CSV field value by wrapping it in quotes if it contains special characters.
+     * 
+     * @param value the value to escape
+     * @return the escaped value
+     */
+    private String escapeCSV(String value) {
+        if (value == null) {
+            return "";
+        }
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
     
     /**

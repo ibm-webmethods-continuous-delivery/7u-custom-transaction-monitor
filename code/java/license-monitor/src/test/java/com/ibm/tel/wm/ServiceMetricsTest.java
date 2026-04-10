@@ -26,6 +26,8 @@ class ServiceMetricsTest {
     void testInitialCountsAreZero() {
         assertEquals(0, metrics.getInvokeCount(), "Initial invoke count should be 0");
         assertEquals(0, metrics.getTransactionCount(), "Initial transaction count should be 0");
+        assertEquals(0, metrics.getMaxDurationMillis(), "Initial max duration should be 0");
+        assertEquals(0.0, metrics.getAvgSecondDuration(), 0.001, "Initial avg duration should be 0");
     }
 
     @Test
@@ -61,6 +63,73 @@ class ServiceMetricsTest {
     }
 
     @Test
+    void testUpdateDurationMaxTracking() {
+        metrics.incrementInvokeCount(1);
+        metrics.updateDuration(1000, 1, "test.service");
+        assertEquals(1000, metrics.getMaxDurationMillis(), "Max duration should be 1000");
+
+        metrics.incrementInvokeCount(1);
+        metrics.updateDuration(500, 1, "test.service");
+        assertEquals(1000, metrics.getMaxDurationMillis(), "Max duration should still be 1000");
+
+        metrics.incrementInvokeCount(1);
+        metrics.updateDuration(2000, 1, "test.service");
+        assertEquals(2000, metrics.getMaxDurationMillis(), "Max duration should be updated to 2000");
+    }
+
+    @Test
+    void testAverageDurationCalculation() {
+        metrics.incrementInvokeCount(1);
+        metrics.updateDuration(3000, 1, "test.service"); // 3 seconds
+
+        metrics.incrementInvokeCount(1);
+        metrics.updateDuration(5000, 1, "test.service"); // 5 seconds
+
+        metrics.incrementInvokeCount(1);
+        metrics.updateDuration(4000, 1, "test.service"); // 4 seconds
+
+        // Average should be (3 + 5 + 4) / 3 = 4 seconds
+        assertEquals(4.0, metrics.getAvgSecondDuration(), 0.001, "Average duration should be 4 seconds");
+    }
+
+    @Test
+    void testHistogramTracking() {
+        int histogramSize = ConfigLoader.getInstance().getTransactionsHistogramCount();
+        
+        // Test bucket 0 (1 transaction)
+        metrics.incrementInvokeCount(1);
+        metrics.updateDuration(1000, 1, "test.service");
+        assertEquals(1, metrics.getHistogramBucket(0), "Bucket 0 should have count 1");
+
+        // Test bucket 1 (2 transactions)
+        metrics.incrementInvokeCount(1);
+        metrics.updateDuration(2000, 2, "test.service");
+        assertEquals(1, metrics.getHistogramBucket(1), "Bucket 1 should have count 1");
+
+        // Test last bucket (>N transactions)
+        metrics.incrementInvokeCount(1);
+        metrics.updateDuration(10000, histogramSize + 5, "test.service");
+        assertEquals(1, metrics.getHistogramBucket(histogramSize), "Last bucket should have count 1");
+    }
+
+    @Test
+    void testHistogramArray() {
+        metrics.incrementInvokeCount(1);
+        metrics.updateDuration(1000, 1, "test.service");
+        
+        metrics.incrementInvokeCount(1);
+        metrics.updateDuration(2000, 2, "test.service");
+        
+        metrics.incrementInvokeCount(1);
+        metrics.updateDuration(3000, 3, "test.service");
+
+        long[] histogram = metrics.getHistogramArray();
+        assertEquals(1, histogram[0], "Bucket 0 should have count 1");
+        assertEquals(1, histogram[1], "Bucket 1 should have count 1");
+        assertEquals(1, histogram[2], "Bucket 2 should have count 1");
+    }
+
+    @Test
     void testConcurrentIncrements() throws InterruptedException {
         int threadCount = 100;
         int incrementsPerThread = 1000;
@@ -73,6 +142,7 @@ class ServiceMetricsTest {
                     for (int j = 0; j < incrementsPerThread; j++) {
                         metrics.incrementInvokeCount(1);
                         metrics.incrementTransactionCount(1);
+                        metrics.updateDuration(1000, 1, "test.service");
                     }
                 } finally {
                     latch.countDown();
@@ -103,6 +173,7 @@ class ServiceMetricsTest {
                 try {
                     metrics.incrementInvokeCount(delta);
                     metrics.incrementTransactionCount(delta * 2);
+                    metrics.updateDuration(delta * 1000, delta, "test.service");
                 } finally {
                     latch.countDown();
                 }
@@ -121,5 +192,7 @@ class ServiceMetricsTest {
             "Invoke count should be " + expectedInvokeCount);
         assertEquals(expectedTransactionCount, metrics.getTransactionCount(), 
             "Transaction count should be " + expectedTransactionCount);
+        assertEquals(50000, metrics.getMaxDurationMillis(), 
+            "Max duration should be 50000 (50 * 1000)");
     }
 }

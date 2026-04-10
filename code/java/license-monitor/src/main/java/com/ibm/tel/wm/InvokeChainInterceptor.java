@@ -4,6 +4,7 @@ import com.wm.app.b2b.server.invoke.InvokeChainProcessor;
 import com.wm.app.b2b.server.invoke.InvokeManager;
 import com.wm.app.b2b.server.invoke.ServiceStatus;
 import com.wm.data.IData;
+import com.wm.util.JournalLogger;
 import com.wm.util.ServerException;
 import java.util.Iterator;
 
@@ -12,7 +13,8 @@ public class InvokeChainInterceptor implements InvokeChainProcessor {
 
 	static {
     InvokeManager.getDefault().registerProcessor(INSTANCE);
-    System.out.println("License monitor processor registered");
+
+    JournalLogger.logInfo(JournalLogger.LOG_EXCEPTION, JournalLogger.FAC_LICENSE_MGR, "Expert Labs License monitor processor registered");
 	}
 	
 	public InvokeChainInterceptor() {
@@ -39,9 +41,12 @@ public class InvokeChainInterceptor implements InvokeChainProcessor {
     } finally {
       long duration = System.currentTimeMillis() - startTime;
 
-      // count one transaction per invoke plus one transaction for every supplemental 30 seconds
-      long transactionsNumber = svc.getPackage().isSystemPackage() ? 0 : 1 + (duration / 30000);
-      LicenseMonitor.getInstance().incrementMetrics(serviceNS, 1, transactionsNumber);
+      // Get threshold from configuration
+      long threshold = ConfigLoader.getInstance().getTransactionMillisecondsThreshold();
+      
+      // count one transaction per invoke plus one transaction for every supplemental threshold period
+      long transactionsNumber = svc.getPackage().isSystemPackage() ? 0 : 1 + (duration / threshold);
+      LicenseMonitor.getInstance().incrementMetrics(serviceNS, 1, transactionsNumber, duration);
     }
 	}
 }
