@@ -43,7 +43,7 @@ public final class licmon
 		
 		// metrics
 		IData[]	metrics = new IData[serviceNSArray.length];
-		System.out.println("Called..., number of registered services: serviceNSArray.length");
+		System.out.println("Called..., number of registered services: " + serviceNSArray.length);
 		for (int i=0; i<serviceNSArray.length; i++){
 			sm = lmi.getMetrics(serviceNSArray[i]);
 			metrics[i] = IDataFactory.create();
