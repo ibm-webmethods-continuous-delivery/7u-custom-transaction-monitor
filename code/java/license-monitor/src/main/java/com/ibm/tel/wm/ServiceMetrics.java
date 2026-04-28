@@ -10,7 +10,7 @@ import com.wm.util.JournalLogger;
  */
 public class ServiceMetrics {
     private final AtomicLong invokeCount;
-    private final AtomicLong transactionCount;
+    private final AtomicLong transactionIntervalsCount;
     private final AtomicLong maxDurationMillis;
     private final AtomicLong totalDurationSeconds;
     private final AtomicLongArray transactionHistogram;
@@ -21,7 +21,7 @@ public class ServiceMetrics {
      */
     public ServiceMetrics() {
         this.invokeCount = new AtomicLong(0);
-        this.transactionCount = new AtomicLong(0);
+        this.transactionIntervalsCount = new AtomicLong(0);
         this.maxDurationMillis = new AtomicLong(0);
         this.totalDurationSeconds = new AtomicLong(0);
         
@@ -45,8 +45,8 @@ public class ServiceMetrics {
      * 
      * @param delta the amount to increment
      */
-    public void incrementTransactionCount(long delta) {
-        transactionCount.addAndGet(delta);
+    public void incrementtransactionIntervalsCount(long delta) {
+        transactionIntervalsCount.addAndGet(delta);
     }
 
     /**
@@ -57,10 +57,10 @@ public class ServiceMetrics {
      * - Updating histogram bucket based on transaction count
      * 
      * @param durationMillis the duration of the service call in milliseconds
-     * @param transactionCount the number of transaction times consumed
+     * @param transactionIntervalsCount the number of transaction times consumed
      * @param serviceNS the service namespace (for logging new records)
      */
-    public void updateDuration(long durationMillis, long transactionCount, String serviceNS) {
+    public void updateDuration(long durationMillis, long transactionIntervalsCount, String serviceNS) {
         // Update max duration using compare-and-swap loop
         long currentMax;
         do {
@@ -82,16 +82,16 @@ public class ServiceMetrics {
         totalDurationSeconds.addAndGet(durationSeconds);
         
         // Update histogram bucket
-        // transactionCount represents how many transaction time intervals were consumed
+        // transactionIntervalsCount represents how many transaction time intervals were consumed
         // Index 0 = 1 interval, Index 1 = 2 intervals, etc.
         // Last index = >N intervals
         int bucketIndex;
-        if (transactionCount <= 0) {
+        if (transactionIntervalsCount <= 0) {
             bucketIndex = 0; // Edge case: treat as 1 interval
-        } else if (transactionCount > histogramSize) {
+        } else if (transactionIntervalsCount > histogramSize) {
             bucketIndex = histogramSize; // ">N" bucket
         } else {
-            bucketIndex = (int) transactionCount - 1; // 1-based to 0-based index
+            bucketIndex = (int) transactionIntervalsCount - 1; // 1-based to 0-based index
         }
         transactionHistogram.incrementAndGet(bucketIndex);
     }
@@ -110,8 +110,8 @@ public class ServiceMetrics {
      * 
      * @return the transaction count
      */
-    public long getTransactionCount() {
-        return transactionCount.get();
+    public long gettransactionIntervalsCount() {
+        return transactionIntervalsCount.get();
     }
 
     /**

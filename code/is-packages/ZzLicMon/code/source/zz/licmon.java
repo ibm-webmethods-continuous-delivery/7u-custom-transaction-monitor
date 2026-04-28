@@ -68,7 +68,7 @@ public final class licmon
 		IDataCursor metricsCursor = metrics[0].getCursor();
 		IDataUtil.put( metricsCursor, "serviceNs", "serviceNs" );
 		IDataUtil.put( metricsCursor, "invokeCount", "invokeCount" );
-		IDataUtil.put( metricsCursor, "transactionCount", "transactionCount" );
+		IDataUtil.put( metricsCursor, "transactionIntervalsCount", "transactionIntervalsCount" );
 		metricsCursor.destroy();
 		IDataUtil.put( pipelineCursor, "metrics", lm.exportToCSV() );
 		pipelineCursor.destroy();
@@ -87,7 +87,7 @@ public final class licmon
 		// [o] record:1:required metrics
 		// [o] - field:0:required serviceNs
 		// [o] - field:0:required invokeCount
-		// [o] - field:0:required transactionCount
+		// [o] - field:0:required transactionIntervalsCount
 		// [o] - field:0:required maxDurationMillis
 		// [o] - field:0:required avgSecondDuration
 		// [o] - field:1:required histogram
@@ -106,7 +106,7 @@ public final class licmon
 			IDataCursor metricsCursor = metrics[i].getCursor();
 			IDataUtil.put( metricsCursor, "serviceNs", serviceNSArray[i] );
 			IDataUtil.put( metricsCursor, "invokeCount", "" + sm.getInvokeCount() );
-			IDataUtil.put( metricsCursor, "transactionCount", "" + sm.getTransactionCount() );
+			IDataUtil.put( metricsCursor, "transactionIntervalsCount", "" + sm.gettransactionIntervalsCount() );
 			IDataUtil.put( metricsCursor, "maxDurationMillis", "" + sm.getMaxDurationMillis() );
 			IDataUtil.put( metricsCursor, "avgSecondDuration", String.format("%.2f", sm.getAvgSecondDuration()) );
 			

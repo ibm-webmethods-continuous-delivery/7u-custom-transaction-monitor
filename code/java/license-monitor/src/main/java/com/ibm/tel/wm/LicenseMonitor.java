@@ -55,10 +55,10 @@ public class LicenseMonitor {
      * 
      * @param serviceNS the service namespace key
      * @param invokeCountDelta the amount to increment invoke count
-     * @param transactionCountDelta the amount to increment transaction count
+     * @param transactionIntervalsCountDelta the amount to increment transaction count
      * @param durationMillis the duration of the service call in milliseconds
      */
-    public void incrementMetrics(String serviceNS, long invokeCountDelta, long transactionCountDelta, long durationMillis) {
+    public void incrementMetrics(String serviceNS, long invokeCountDelta, long transactionIntervalsCountDelta, long durationMillis) {
         if (serviceNS == null) {
             throw new IllegalArgumentException("serviceNS cannot be null");
         }
@@ -70,8 +70,8 @@ public class LicenseMonitor {
         // Increment operations are thread-safe at the ServiceMetrics level
         // using AtomicLong, so no additional synchronization needed here
         metrics.incrementInvokeCount(invokeCountDelta);
-        metrics.incrementTransactionCount(transactionCountDelta);
-        metrics.updateDuration(durationMillis, transactionCountDelta, serviceNS);
+        metrics.incrementtransactionIntervalsCount(transactionIntervalsCountDelta);
+        metrics.updateDuration(durationMillis, transactionIntervalsCountDelta, serviceNS);
     }
     
     /**
@@ -95,7 +95,7 @@ public class LicenseMonitor {
     
     /**
      * Exports all metrics as a CSV string.
-     * Format: ServiceNS,InvokeCount,TransactionCount,MaxDurationMillis,AvgSecondDuration,Histogram[1],Histogram[2],...,Histogram[N],Histogram[>N]
+     * Format: ServiceNS,InvokeCount,transactionIntervalsCount,MaxDurationMillis,AvgSecondDuration,Histogram[1],Histogram[2],...,Histogram[N],Histogram[>N]
      * 
      * @return CSV string containing all metrics
      */
@@ -103,7 +103,7 @@ public class LicenseMonitor {
         StringBuilder csv = new StringBuilder();
         
         // Build header
-        csv.append("ServiceNS,InvokeCount,TransactionCount,MaxDurationMillis,AvgSecondDuration");
+        csv.append("ServiceNS,InvokeCount,transactionIntervalsCount,MaxDurationMillis,AvgSecondDuration");
         
         // Add histogram headers
         int histogramSize = ConfigLoader.getInstance().getTransactionsHistogramCount();
@@ -120,7 +120,7 @@ public class LicenseMonitor {
             if (metrics != null) {
                 csv.append(escapeCSV(serviceNS)).append(",");
                 csv.append(metrics.getInvokeCount()).append(",");
-                csv.append(metrics.getTransactionCount()).append(",");
+                csv.append(metrics.gettransactionIntervalsCount()).append(",");
                 csv.append(metrics.getMaxDurationMillis()).append(",");
                 csv.append(String.format("%.2f", metrics.getAvgSecondDuration()));
                 

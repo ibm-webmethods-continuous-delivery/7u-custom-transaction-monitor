@@ -25,7 +25,7 @@ class ServiceMetricsTest {
     @Test
     void testInitialCountsAreZero() {
         assertEquals(0, metrics.getInvokeCount(), "Initial invoke count should be 0");
-        assertEquals(0, metrics.getTransactionCount(), "Initial transaction count should be 0");
+        assertEquals(0, metrics.gettransactionIntervalsCount(), "Initial transaction count should be 0");
         assertEquals(0, metrics.getMaxDurationMillis(), "Initial max duration should be 0");
         assertEquals(0.0, metrics.getAvgSecondDuration(), 0.001, "Initial avg duration should be 0");
     }
@@ -34,25 +34,25 @@ class ServiceMetricsTest {
     void testIncrementInvokeCount() {
         metrics.incrementInvokeCount(5);
         assertEquals(5, metrics.getInvokeCount(), "Invoke count should be 5 after increment");
-        assertEquals(0, metrics.getTransactionCount(), "Transaction count should remain 0");
+        assertEquals(0, metrics.gettransactionIntervalsCount(), "Transaction count should remain 0");
     }
 
     @Test
-    void testIncrementTransactionCount() {
-        metrics.incrementTransactionCount(3);
+    void testIncrementtransactionIntervalsCount() {
+        metrics.incrementtransactionIntervalsCount(3);
         assertEquals(0, metrics.getInvokeCount(), "Invoke count should remain 0");
-        assertEquals(3, metrics.getTransactionCount(), "Transaction count should be 3 after increment");
+        assertEquals(3, metrics.gettransactionIntervalsCount(), "Transaction count should be 3 after increment");
     }
 
     @Test
     void testMultipleIncrements() {
         metrics.incrementInvokeCount(10);
         metrics.incrementInvokeCount(5);
-        metrics.incrementTransactionCount(7);
-        metrics.incrementTransactionCount(3);
+        metrics.incrementtransactionIntervalsCount(7);
+        metrics.incrementtransactionIntervalsCount(3);
 
         assertEquals(15, metrics.getInvokeCount(), "Invoke count should be 15");
-        assertEquals(10, metrics.getTransactionCount(), "Transaction count should be 10");
+        assertEquals(10, metrics.gettransactionIntervalsCount(), "Transaction count should be 10");
     }
 
     @Test
@@ -141,7 +141,7 @@ class ServiceMetricsTest {
                 try {
                     for (int j = 0; j < incrementsPerThread; j++) {
                         metrics.incrementInvokeCount(1);
-                        metrics.incrementTransactionCount(1);
+                        metrics.incrementtransactionIntervalsCount(1);
                         metrics.updateDuration(1000, 1, "test.service");
                     }
                 } finally {
@@ -157,7 +157,7 @@ class ServiceMetricsTest {
         long expectedCount = (long) threadCount * incrementsPerThread;
         assertEquals(expectedCount, metrics.getInvokeCount(), 
             "Invoke count should be " + expectedCount + " after concurrent increments");
-        assertEquals(expectedCount, metrics.getTransactionCount(), 
+        assertEquals(expectedCount, metrics.gettransactionIntervalsCount(), 
             "Transaction count should be " + expectedCount + " after concurrent increments");
     }
 
@@ -172,7 +172,7 @@ class ServiceMetricsTest {
             executor.submit(() -> {
                 try {
                     metrics.incrementInvokeCount(delta);
-                    metrics.incrementTransactionCount(delta * 2);
+                    metrics.incrementtransactionIntervalsCount(delta * 2);
                     metrics.updateDuration(delta * 1000, delta, "test.service");
                 } finally {
                     latch.countDown();
@@ -186,12 +186,12 @@ class ServiceMetricsTest {
 
         // Sum of 1 to 50 = 50 * 51 / 2 = 1275
         long expectedInvokeCount = (long) threadCount * (threadCount + 1) / 2;
-        long expectedTransactionCount = expectedInvokeCount * 2;
+        long expectedtransactionIntervalsCount = expectedInvokeCount * 2;
 
         assertEquals(expectedInvokeCount, metrics.getInvokeCount(), 
             "Invoke count should be " + expectedInvokeCount);
-        assertEquals(expectedTransactionCount, metrics.getTransactionCount(), 
-            "Transaction count should be " + expectedTransactionCount);
+        assertEquals(expectedtransactionIntervalsCount, metrics.gettransactionIntervalsCount(), 
+            "Transaction count should be " + expectedtransactionIntervalsCount);
         assertEquals(50000, metrics.getMaxDurationMillis(), 
             "Max duration should be 50000 (50 * 1000)");
     }
