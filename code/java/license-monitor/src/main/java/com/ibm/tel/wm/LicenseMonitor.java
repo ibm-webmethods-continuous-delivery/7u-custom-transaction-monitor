@@ -70,7 +70,7 @@ public class LicenseMonitor {
         // Increment operations are thread-safe at the ServiceMetrics level
         // using AtomicLong, so no additional synchronization needed here
         metrics.incrementInvokeCount(invokeCountDelta);
-        metrics.incrementtransactionIntervalsCount(transactionIntervalsCountDelta);
+        metrics.incrementTransactionIntervalsCount(transactionIntervalsCountDelta);
         metrics.updateDuration(durationMillis, transactionIntervalsCountDelta, serviceNS);
     }
     
@@ -103,7 +103,7 @@ public class LicenseMonitor {
         StringBuilder csv = new StringBuilder();
         
         // Build header
-        csv.append("ServiceNS,InvokeCount,transactionIntervalsCount,MaxDurationMillis,AvgSecondDuration");
+        csv.append("ServiceNS,InvokeCount,TransactionIntervalsCount,MaxDurationMillis,AvgSecondDuration");
         
         // Add histogram headers
         int histogramSize = ConfigLoader.getInstance().getTransactionsHistogramCount();
@@ -120,7 +120,7 @@ public class LicenseMonitor {
             if (metrics != null) {
                 csv.append(escapeCSV(serviceNS)).append(",");
                 csv.append(metrics.getInvokeCount()).append(",");
-                csv.append(metrics.gettransactionIntervalsCount()).append(",");
+                csv.append(metrics.getTransactionIntervalsCount()).append(",");
                 csv.append(metrics.getMaxDurationMillis()).append(",");
                 csv.append(String.format("%.2f", metrics.getAvgSecondDuration()));
                 

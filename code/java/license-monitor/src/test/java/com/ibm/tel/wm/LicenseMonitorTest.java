@@ -75,7 +75,7 @@ class LicenseMonitorTest {
         ServiceMetrics metrics = monitor.getMetrics(serviceNS);
         assertNotNull(metrics, "Metrics should be created after increment");
         assertEquals(5, metrics.getInvokeCount(), "Invoke count should be 5");
-        assertEquals(3, metrics.gettransactionIntervalsCount(), "Transaction count should be 3");
+        assertEquals(3, metrics.getTransactionIntervalsCount(), "Transaction count should be 3");
     }
 
     @Test
@@ -88,7 +88,7 @@ class LicenseMonitorTest {
         ServiceMetrics metrics = monitor.getMetrics(serviceNS);
         assertNotNull(metrics, "Metrics should exist");
         assertEquals(7, metrics.getInvokeCount(), "Invoke count should be 7");
-        assertEquals(10, metrics.gettransactionIntervalsCount(), "Transaction count should be 10");
+        assertEquals(10, metrics.getTransactionIntervalsCount(), "Transaction count should be 10");
     }
 
     @Test
@@ -113,11 +113,11 @@ class LicenseMonitorTest {
         assertNotNull(metrics3);
 
         assertEquals(10, metrics1.getInvokeCount());
-        assertEquals(20, metrics1.gettransactionIntervalsCount());
+        assertEquals(20, metrics1.getTransactionIntervalsCount());
         assertEquals(30, metrics2.getInvokeCount());
-        assertEquals(40, metrics2.gettransactionIntervalsCount());
+        assertEquals(40, metrics2.getTransactionIntervalsCount());
         assertEquals(50, metrics3.getInvokeCount());
-        assertEquals(60, metrics3.gettransactionIntervalsCount());
+        assertEquals(60, metrics3.getTransactionIntervalsCount());
     }
 
     @Test
@@ -148,12 +148,12 @@ class LicenseMonitorTest {
         assertNotNull(metrics, "Metrics should exist");
 
         long expectedInvokeCount = (long) threadCount * incrementsPerThread;
-        long expectedtransactionIntervalsCount = expectedInvokeCount * 2;
+        long expectedTransactionIntervalsCount = expectedInvokeCount * 2;
 
         assertEquals(expectedInvokeCount, metrics.getInvokeCount(), 
             "Invoke count should be " + expectedInvokeCount + " after concurrent increments");
-        assertEquals(expectedtransactionIntervalsCount, metrics.gettransactionIntervalsCount(), 
-            "Transaction count should be " + expectedtransactionIntervalsCount + " after concurrent increments");
+        assertEquals(expectedTransactionIntervalsCount, metrics.getTransactionIntervalsCount(), 
+            "Transaction count should be " + expectedTransactionIntervalsCount + " after concurrent increments");
     }
 
     @Test
@@ -188,7 +188,7 @@ class LicenseMonitorTest {
             assertNotNull(metrics, "Metrics should exist for " + serviceNS);
             assertEquals(expectedCountPerService, metrics.getInvokeCount(), 
                 "Invoke count for " + serviceNS + " should be " + expectedCountPerService);
-            assertEquals(expectedCountPerService, metrics.gettransactionIntervalsCount(), 
+            assertEquals(expectedCountPerService, metrics.getTransactionIntervalsCount(), 
                 "Transaction count for " + serviceNS + " should be " + expectedCountPerService);
         }
     }
@@ -227,15 +227,15 @@ class LicenseMonitorTest {
         // Calculate expected sum: sum of even numbers from 0 to 48 (0,2,4,...,48)
         // Sum = 0 + 2 + 4 + ... + 48 = 2(0 + 1 + 2 + ... + 24) = 2 * (24 * 25 / 2) = 600
         long expectedInvokeCount = 0;
-        long expectedtransactionIntervalsCount = 0;
+        long expectedTransactionIntervalsCount = 0;
         for (int i = 0; i < threadCount; i += 2) {
             expectedInvokeCount += i;
-            expectedtransactionIntervalsCount += i * 2;
+            expectedTransactionIntervalsCount += i * 2;
         }
 
         assertEquals(expectedInvokeCount, metrics.getInvokeCount(), 
             "Invoke count should match expected sum");
-        assertEquals(expectedtransactionIntervalsCount, metrics.gettransactionIntervalsCount(), 
+        assertEquals(expectedTransactionIntervalsCount, metrics.getTransactionIntervalsCount(), 
             "Transaction count should match expected sum");
     }
 
@@ -279,7 +279,7 @@ class LicenseMonitorTest {
             
             // Read and verify content
             String content = new String(Files.readAllBytes(path));
-            assertTrue(content.contains("ServiceNS,InvokeCount,transactionIntervalsCount"), 
+            assertTrue(content.contains("ServiceNS,InvokeCount,TransactionIntervalsCount"), 
                 "CSV should contain header");
             assertTrue(content.contains("service1"), "CSV should contain service1 data");
             assertTrue(content.contains("service2"), "CSV should contain service2 data");

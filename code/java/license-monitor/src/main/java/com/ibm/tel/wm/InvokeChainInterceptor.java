@@ -45,7 +45,7 @@ public class InvokeChainInterceptor implements InvokeChainProcessor {
       long threshold = ConfigLoader.getInstance().getTransactionMillisecondsThreshold();
       
       // just record the number of intervals, decide if a top level service generates transactions a-posteriori
-      LicenseMonitor.getInstance().incrementMetrics(serviceNS, 1, (duration / threshold), duration);
+      LicenseMonitor.getInstance().incrementMetrics(serviceNS, 1, 1 + (duration / threshold), duration);
     }
 	}
 }

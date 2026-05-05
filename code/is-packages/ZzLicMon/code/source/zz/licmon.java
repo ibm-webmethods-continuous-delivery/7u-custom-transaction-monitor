@@ -51,34 +51,6 @@ public final class licmon
 
 
 
-	public static final void getCSV (IData pipeline)
-        throws ServiceException
-	{
-		// --- <<IS-START(getCSV)>> ---
-		// @sigtype java 3.5
-		// [o] field:0:required metricsCSV
-		com.ibm.tel.wm.LicenseMonitor lm = com.ibm.tel.wm.LicenseMonitor.getInstance();
-		
-		// pipeline
-		IDataCursor pipelineCursor = pipeline.getCursor();
-		
-		// metrics
-		IData[]	metrics = new IData[1];
-		metrics[0] = IDataFactory.create();
-		IDataCursor metricsCursor = metrics[0].getCursor();
-		IDataUtil.put( metricsCursor, "serviceNs", "serviceNs" );
-		IDataUtil.put( metricsCursor, "invokeCount", "invokeCount" );
-		IDataUtil.put( metricsCursor, "transactionIntervalsCount", "transactionIntervalsCount" );
-		metricsCursor.destroy();
-		IDataUtil.put( pipelineCursor, "metrics", lm.exportToCSV() );
-		pipelineCursor.destroy();
-		// --- <<IS-END>> ---
-
-                
-	}
-
-
-
 	public static final void getMetrics (IData pipeline)
         throws ServiceException
 	{
@@ -106,7 +78,7 @@ public final class licmon
 			IDataCursor metricsCursor = metrics[i].getCursor();
 			IDataUtil.put( metricsCursor, "serviceNs", serviceNSArray[i] );
 			IDataUtil.put( metricsCursor, "invokeCount", "" + sm.getInvokeCount() );
-			IDataUtil.put( metricsCursor, "transactionIntervalsCount", "" + sm.gettransactionIntervalsCount() );
+			IDataUtil.put( metricsCursor, "transactionIntervalsCount", "" + sm.getTransactionIntervalsCount() );
 			IDataUtil.put( metricsCursor, "maxDurationMillis", "" + sm.getMaxDurationMillis() );
 			IDataUtil.put( metricsCursor, "avgSecondDuration", String.format("%.2f", sm.getAvgSecondDuration()) );
 			

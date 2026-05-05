@@ -45,7 +45,7 @@ public class ServiceMetrics {
      * 
      * @param delta the amount to increment
      */
-    public void incrementtransactionIntervalsCount(long delta) {
+    public void incrementTransactionIntervalsCount(long delta) {
         transactionIntervalsCount.addAndGet(delta);
     }
 
@@ -110,7 +110,7 @@ public class ServiceMetrics {
      * 
      * @return the transaction count
      */
-    public long gettransactionIntervalsCount() {
+    public long getTransactionIntervalsCount() {
         return transactionIntervalsCount.get();
     }
 
