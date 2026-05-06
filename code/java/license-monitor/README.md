@@ -138,20 +138,56 @@ String[] services = monitor.getServiceNamespaces();
 // Export to CSV string
 String csv = monitor.exportToCSV();
 
-// Export to CSV file
-monitor.exportToCSVFile("/path/to/metrics.csv");
+// Export to CSV file with auto-generated filename (recommended)
+String filePath = monitor.exportToCSVFile("/path/to/directory");
+// Returns: /path/to/directory/metrics_hostname_20260505_103000.csv
+
+// Export to CSV file with explicit filename
+monitor.exportToCSVFileWithName("/path/to/metrics.csv");
 ```
 
 ### CSV Export Format
 
-The exported CSV includes:
-- ServiceNS - Full service namespace
-- InvokeCount - Total number of invocations
-- transactionIntervalsCount - Total transaction intervals consumed
-- MaxDurationMillis - Maximum execution time in milliseconds
-- AvgSecondDuration - Average execution time in seconds
-- Histogram[1] through Histogram[N] - Count of services consuming 1 to N transaction intervals
-- Histogram[>N] - Count of services consuming more than N transaction intervals
+The exported CSV includes **context columns** for multi-instance analysis:
+
+**Context Columns (added to support multi-node, multi-runtime environments):**
+- `Hostname` - Identifies the node where metrics were collected
+- `RuntimePort` - Integration Server primary port (distinguishes multiple IS instances on same node)
+- `ExportTimestampMillis` - When the data was exported (epoch milliseconds)
+- `CollectionStartMillis` - When monitoring started (epoch milliseconds)
+- `CollectionDurationSeconds` - How long data was collected (in seconds)
+
+**Service Metrics Columns:**
+- `ServiceNS` - Full service namespace
+- `InvokeCount` - Total number of invocations
+- `TransactionIntervalsCount` - Total transaction intervals consumed
+- `MaxDurationMillis` - Maximum execution time in milliseconds
+- `AvgSecondDuration` - Average execution time in seconds
+- `Histogram[1]` through `Histogram[N]` - Count of services consuming 1 to N transaction intervals
+- `Histogram[>N]` - Count of services consuming more than N transaction intervals
+
+**Example CSV Output:**
+```csv
+Hostname,RuntimePort,ExportTimestampMillis,CollectionStartMillis,CollectionDurationSeconds,ServiceNS,InvokeCount,TransactionIntervalsCount,MaxDurationMillis,AvgSecondDuration,Histogram[1],Histogram[2],Histogram[3],Histogram[4],Histogram[5],Histogram[>5]
+server01,5555,1746437940000,1746437880000,60,my.package:myService,150,45,2500,1.25,100,30,15,3,2,0
+```
+
+### Multi-Instance Analysis
+
+The context columns enable easy aggregation and analysis across:
+- **Multiple nodes** - Use `Hostname` to identify different servers
+- **Multiple runtimes** - Use `RuntimePort` to distinguish IS instances on the same node
+- **Time periods** - Use timestamps to track metrics over time
+- **Collection intervals** - Use `CollectionDurationSeconds` to normalize metrics
+
+**Merging CSVs from multiple instances:**
+```bash
+# Simple concatenation (skip headers from subsequent files)
+cat metrics_server01_*.csv > combined.csv
+tail -n +2 metrics_server02_*.csv >> combined.csv
+
+# Or use tools like pandas, SQL, Excel Power Query for advanced analysis
+```
 
 ## Thread Safety
 
@@ -175,8 +211,9 @@ All components are designed for thread-safe operation:
 To add new metrics:
 1. Add fields to `ServiceMetrics` class (use atomic types for thread safety)
 2. Update `incrementMetrics()` in `LicenseMonitor`
-3. Update `exportToCSV()` to include new fields
+3. Update `exportToCSV()` to include new fields in the appropriate section (context or service metrics)
 4. Update CSV header in `exportToCSV()`
+5. Update unit tests to verify new fields
 
 ### Testing
 
@@ -186,6 +223,14 @@ Run tests:
 ```bash
 mvn test
 ```
+
+**Test Coverage:**
+- Singleton pattern verification
+- Thread-safe concurrent operations
+- Metrics collection and aggregation
+- CSV export with context information
+- File I/O operations
+- Error handling
 
 ### Code Style
 

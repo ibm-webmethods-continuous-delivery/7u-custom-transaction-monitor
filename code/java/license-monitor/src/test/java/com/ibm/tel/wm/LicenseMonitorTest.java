@@ -32,7 +32,7 @@ class LicenseMonitorTest {
     void testSingletonInstance() {
         LicenseMonitor instance1 = LicenseMonitor.getInstance();
         LicenseMonitor instance2 = LicenseMonitor.getInstance();
-        
+
         assertSame(instance1, instance2, "getInstance should always return the same instance");
     }
 
@@ -59,7 +59,7 @@ class LicenseMonitorTest {
 
         LicenseMonitor firstInstance = instances[0];
         for (int i = 1; i < threadCount; i++) {
-            assertSame(firstInstance, instances[i], 
+            assertSame(firstInstance, instances[i],
                 "All threads should get the same singleton instance");
         }
     }
@@ -67,11 +67,11 @@ class LicenseMonitorTest {
     @Test
     void testIncrementMetricsCreatesNewEntry() {
         String serviceNS = "test.service";
-        
+
         assertNull(monitor.getMetrics(serviceNS), "Metrics should not exist initially");
-        
+
         monitor.incrementMetrics(serviceNS, 5, 3, 100L);
-        
+
         ServiceMetrics metrics = monitor.getMetrics(serviceNS);
         assertNotNull(metrics, "Metrics should be created after increment");
         assertEquals(5, metrics.getInvokeCount(), "Invoke count should be 5");
@@ -81,10 +81,10 @@ class LicenseMonitorTest {
     @Test
     void testIncrementMetricsUpdatesExistingEntry() {
         String serviceNS = "test.service";
-        
+
         monitor.incrementMetrics(serviceNS, 5, 3, 100L);
         monitor.incrementMetrics(serviceNS, 2, 7, 200L);
-        
+
         ServiceMetrics metrics = monitor.getMetrics(serviceNS);
         assertNotNull(metrics, "Metrics should exist");
         assertEquals(7, metrics.getInvokeCount(), "Invoke count should be 7");
@@ -93,7 +93,7 @@ class LicenseMonitorTest {
 
     @Test
     void testIncrementMetricsWithNullServiceNS() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(IllegalArgumentException.class,
             () -> monitor.incrementMetrics(null, 1, 1, 100L),
             "Should throw IllegalArgumentException for null serviceNS");
     }
@@ -150,9 +150,9 @@ class LicenseMonitorTest {
         long expectedInvokeCount = (long) threadCount * incrementsPerThread;
         long expectedTransactionIntervalsCount = expectedInvokeCount * 2;
 
-        assertEquals(expectedInvokeCount, metrics.getInvokeCount(), 
+        assertEquals(expectedInvokeCount, metrics.getInvokeCount(),
             "Invoke count should be " + expectedInvokeCount + " after concurrent increments");
-        assertEquals(expectedTransactionIntervalsCount, metrics.getTransactionIntervalsCount(), 
+        assertEquals(expectedTransactionIntervalsCount, metrics.getTransactionIntervalsCount(),
             "Transaction count should be " + expectedTransactionIntervalsCount + " after concurrent increments");
     }
 
@@ -186,9 +186,9 @@ class LicenseMonitorTest {
             String serviceNS = "service." + i;
             ServiceMetrics metrics = monitor.getMetrics(serviceNS);
             assertNotNull(metrics, "Metrics should exist for " + serviceNS);
-            assertEquals(expectedCountPerService, metrics.getInvokeCount(), 
+            assertEquals(expectedCountPerService, metrics.getInvokeCount(),
                 "Invoke count for " + serviceNS + " should be " + expectedCountPerService);
-            assertEquals(expectedCountPerService, metrics.getTransactionIntervalsCount(), 
+            assertEquals(expectedCountPerService, metrics.getTransactionIntervalsCount(),
                 "Transaction count for " + serviceNS + " should be " + expectedCountPerService);
         }
     }
@@ -223,7 +223,7 @@ class LicenseMonitorTest {
 
         ServiceMetrics metrics = monitor.getMetrics(serviceNS);
         assertNotNull(metrics, "Metrics should exist after mixed operations");
-        
+
         // Calculate expected sum: sum of even numbers from 0 to 48 (0,2,4,...,48)
         // Sum = 0 + 2 + 4 + ... + 48 = 2(0 + 1 + 2 + ... + 24) = 2 * (24 * 25 / 2) = 600
         long expectedInvokeCount = 0;
@@ -233,15 +233,15 @@ class LicenseMonitorTest {
             expectedTransactionIntervalsCount += i * 2;
         }
 
-        assertEquals(expectedInvokeCount, metrics.getInvokeCount(), 
+        assertEquals(expectedInvokeCount, metrics.getInvokeCount(),
             "Invoke count should match expected sum");
-        assertEquals(expectedTransactionIntervalsCount, metrics.getTransactionIntervalsCount(), 
+        assertEquals(expectedTransactionIntervalsCount, metrics.getTransactionIntervalsCount(),
             "Transaction count should match expected sum");
     }
 
     @Test
     void testGetMetricsForNonExistentService() {
-        assertNull(monitor.getMetrics("non.existent.service"), 
+        assertNull(monitor.getMetrics("non.existent.service"),
             "Should return null for non-existent service");
     }
 
@@ -249,41 +249,78 @@ class LicenseMonitorTest {
     void testClearAllMetrics() {
         monitor.incrementMetrics("service1", 10, 20, 100L);
         monitor.incrementMetrics("service2", 30, 40, 200L);
-        
+
         assertNotNull(monitor.getMetrics("service1"));
         assertNotNull(monitor.getMetrics("service2"));
-        
+
         monitor.clearAllMetrics();
-        
+
         assertNull(monitor.getMetrics("service1"), "Metrics should be cleared");
         assertNull(monitor.getMetrics("service2"), "Metrics should be cleared");
     }
 
     @Test
-    void testExportToCSVFile() throws IOException {
+    void testexportToCSVFileInFolder() throws IOException {
         // Setup test data
         monitor.incrementMetrics("service1", 10, 20, 100L);
         monitor.incrementMetrics("service2", 30, 40, 200L);
-        
-        // Create temp file path
+
+        // Create temp directory path
         String tempDir = System.getProperty("java.io.tmpdir");
-        String filePath = tempDir + "/test-metrics-" + System.currentTimeMillis() + ".csv";
-        
+
         try {
-            // Export to file
-            monitor.exportToCSVFile(filePath);
-            
+            // Export to file with auto-generated filename
+            String filePath = monitor.exportToCSVFileInFolder(tempDir);
+
             // Verify file exists
             Path path = Paths.get(filePath);
             assertTrue(Files.exists(path), "CSV file should be created");
-            
+            assertTrue(filePath.contains("metrics_"), "Filename should contain 'metrics_'");
+            assertTrue(filePath.endsWith(".csv"), "Filename should end with .csv");
+
             // Read and verify content
             String content = new String(Files.readAllBytes(path));
-            assertTrue(content.contains("ServiceNS,InvokeCount,TransactionIntervalsCount"), 
-                "CSV should contain header");
+            assertTrue(content.contains("Hostname,RuntimePort,ExportTimestampMillis,CollectionStartMillis,CollectionDurationSeconds"),
+                "CSV should contain context headers");
+            assertTrue(content.contains("ServiceNS,InvokeCount,TransactionIntervalsCount"),
+                "CSV should contain metric headers");
             assertTrue(content.contains("service1"), "CSV should contain service1 data");
             assertTrue(content.contains("service2"), "CSV should contain service2 data");
-            
+
+            // Cleanup
+            Files.deleteIfExists(path);
+        } catch (Exception e) {
+            fail("Export should not throw exception: " + e.getMessage());
+        }
+    }
+
+    @Test
+    void testexportToCSVFile() throws IOException {
+        // Setup test data
+        monitor.incrementMetrics("service1", 10, 20, 100L);
+        monitor.incrementMetrics("service2", 30, 40, 200L);
+
+        // Create temp file path
+        String tempDir = System.getProperty("java.io.tmpdir");
+        String filePath = tempDir + "/test-metrics-" + System.currentTimeMillis() + ".csv";
+
+        try {
+            // Export to file with explicit filename
+            monitor.exportToCSVFile(filePath);
+
+            // Verify file exists
+            Path path = Paths.get(filePath);
+            assertTrue(Files.exists(path), "CSV file should be created");
+
+            // Read and verify content
+            String content = new String(Files.readAllBytes(path));
+            assertTrue(content.contains("Hostname,RuntimePort,ExportTimestampMillis,CollectionStartMillis,CollectionDurationSeconds"),
+                "CSV should contain context headers");
+            assertTrue(content.contains("ServiceNS,InvokeCount,TransactionIntervalsCount"),
+                "CSV should contain metric headers");
+            assertTrue(content.contains("service1"), "CSV should contain service1 data");
+            assertTrue(content.contains("service2"), "CSV should contain service2 data");
+
         } finally {
             // Cleanup
             Files.deleteIfExists(Paths.get(filePath));
@@ -292,18 +329,36 @@ class LicenseMonitorTest {
 
     @Test
     void testExportToCSVFileWithNullPath() {
-        assertThrows(IllegalArgumentException.class, 
+        assertThrows(IllegalArgumentException.class,
+            () -> monitor.exportToCSVFileInFolder(null),
+            "Should throw IllegalArgumentException for null directory path");
+    }
+
+    @Test
+    void testExportToCSVFileWithEmptyPath() {
+        assertThrows(IllegalArgumentException.class,
+            () -> monitor.exportToCSVFileInFolder(""),
+            "Should throw IllegalArgumentException for empty directory path");
+
+        assertThrows(IllegalArgumentException.class,
+            () -> monitor.exportToCSVFileInFolder("   "),
+            "Should throw IllegalArgumentException for whitespace-only directory path");
+    }
+
+    @Test
+    void testexportToCSVFileNullPath() {
+        assertThrows(IllegalArgumentException.class,
             () -> monitor.exportToCSVFile(null),
             "Should throw IllegalArgumentException for null file path");
     }
 
     @Test
-    void testExportToCSVFileWithEmptyPath() {
-        assertThrows(IllegalArgumentException.class, 
+    void testexportToCSVFileEmptyPath() {
+        assertThrows(IllegalArgumentException.class,
             () -> monitor.exportToCSVFile(""),
             "Should throw IllegalArgumentException for empty file path");
-        
-        assertThrows(IllegalArgumentException.class, 
+
+        assertThrows(IllegalArgumentException.class,
             () -> monitor.exportToCSVFile("   "),
             "Should throw IllegalArgumentException for whitespace-only file path");
     }
@@ -312,57 +367,92 @@ class LicenseMonitorTest {
     void testExportToCSVFileCreatesParentDirectory() throws IOException {
         // Setup test data
         monitor.incrementMetrics("test.service", 5, 10, 150L);
-        
+
         // Create path with non-existent parent directory
         String tempDir = System.getProperty("java.io.tmpdir");
         String subDir = "test-metrics-" + System.currentTimeMillis();
-        String filePath = tempDir + "/" + subDir + "/metrics.csv";
-        
+        String dirPath = tempDir + "/" + subDir;
+
         try {
-            // Export to file
-            monitor.exportToCSVFile(filePath);
-            
+            // Export to directory (will create it)
+            String filePath = monitor.exportToCSVFileInFolder(dirPath);
+
             // Verify file and directory exist
             Path path = Paths.get(filePath);
             assertTrue(Files.exists(path), "CSV file should be created");
             assertTrue(Files.exists(path.getParent()), "Parent directory should be created");
-            
-        } finally {
+
             // Cleanup
-            Path path = Paths.get(filePath);
             Files.deleteIfExists(path);
-            if (path.getParent() != null) {
-                Files.deleteIfExists(path.getParent());
+            Files.deleteIfExists(path.getParent());
+        } catch (Exception e) {
+            // Cleanup on error
+            Path dirPathObj = Paths.get(dirPath);
+            if (Files.exists(dirPathObj)) {
+                Files.list(dirPathObj).forEach(file -> {
+                    try {
+                        Files.deleteIfExists(file);
+                    } catch (IOException ex) {
+                        // Ignore
+                    }
+                });
+                Files.deleteIfExists(dirPathObj);
             }
+            throw e;
         }
     }
 
     @Test
-    void testExportToCSVFileOverwritesExisting() throws IOException {
+    void testexportToCSVFileOverwritesExisting() throws IOException {
         // Setup test data
         monitor.incrementMetrics("service1", 10, 20, 100L);
-        
+
         String tempDir = System.getProperty("java.io.tmpdir");
         String filePath = tempDir + "/test-overwrite-" + System.currentTimeMillis() + ".csv";
-        
+
         try {
             // First export
             monitor.exportToCSVFile(filePath);
             String firstContent = new String(Files.readAllBytes(Paths.get(filePath)));
-            
+
             // Add more data and export again
             monitor.incrementMetrics("service2", 30, 40, 200L);
             monitor.exportToCSVFile(filePath);
             String secondContent = new String(Files.readAllBytes(Paths.get(filePath)));
-            
+
             // Verify file was overwritten with new content
             assertNotEquals(firstContent, secondContent, "File should be overwritten");
             assertTrue(secondContent.contains("service2"), "New content should include service2");
-            
+
         } finally {
             // Cleanup
             Files.deleteIfExists(Paths.get(filePath));
         }
+    }
+
+    @Test
+    void testExportToCSVContainsContextInformation() {
+        // Setup test data
+        monitor.incrementMetrics("test.service", 5, 10, 150L);
+
+        // Export to CSV string
+        String csv = monitor.exportToCSV();
+
+        // Verify context columns are present
+        assertTrue(csv.contains("Hostname"), "CSV should contain Hostname column");
+        assertTrue(csv.contains("RuntimePort"), "CSV should contain RuntimePort column");
+        assertTrue(csv.contains("ExportTimestampMillis"), "CSV should contain ExportTimestampMillis column");
+        assertTrue(csv.contains("CollectionStartMillis"), "CSV should contain CollectionStartMillis column");
+        assertTrue(csv.contains("CollectionDurationSeconds"), "CSV should contain CollectionDurationSeconds column");
+
+        // Verify data rows have context values
+        String[] lines = csv.split("\n");
+        assertTrue(lines.length >= 2, "CSV should have header and at least one data row");
+
+        // Check that data row has values for all context columns
+        String dataRow = lines[1];
+        String[] values = dataRow.split(",");
+        assertTrue(values.length >= 5, "Data row should have at least 5 context columns");
     }
 
 }

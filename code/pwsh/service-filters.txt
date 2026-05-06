@@ -1,0 +1,29 @@
+# Service Filter Patterns
+#
+# This file contains regular expression patterns (one per line) to filter out
+# services from the unified metrics CSV.
+#
+# Lines starting with # are treated as comments and ignored.
+# Empty lines are also ignored.
+#
+# Pattern Syntax: PowerShell regular expressions
+# - Use .* for wildcard matching
+# - Use ^ for start of string, $ for end of string
+# - Patterns are case-sensitive by default
+#
+# Examples:
+#   ^wm\.server\..*        - Matches all services starting with "wm.server."
+#   .*:test$               - Matches all services ending with ":test"
+#   ^(wm|pub)\..*          - Matches services starting with "wm." or "pub."
+#
+# Last Updated: 2026-05-05
+
+# Filter out license monitor services
+^zz\.licmon\..*
+
+# Filter out webMethods server internal services
+^wm\.server\..*
+
+# Add more patterns below as needed
+# ^wm\.dev\..*
+# ^pub\..*

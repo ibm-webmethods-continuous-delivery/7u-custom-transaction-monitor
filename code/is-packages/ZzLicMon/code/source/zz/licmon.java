@@ -109,7 +109,6 @@ public final class licmon
 		// [o] field:0:required startTimeEpoch
 		// pipeline
 		
-		// pipeline
 		IDataCursor pipelineCursor = pipeline.getCursor();
 		IDataUtil.put( pipelineCursor, "startTimeEpoch", ""+com.ibm.tel.wm.LicenseMonitor.getInitMillis() );
 		pipelineCursor.destroy();
@@ -133,10 +132,10 @@ public final class licmon
 
 
 
-	public static final void wrteCsvToFile (IData pipeline)
+	public static final void writeCsvToFile (IData pipeline)
         throws ServiceException
 	{
-		// --- <<IS-START(wrteCsvToFile)>> ---
+		// --- <<IS-START(writeCsvToFile)>> ---
 		// @sigtype java 3.5
 		// [i] field:0:required filePathAndName
 		com.ibm.tel.wm.LicenseMonitor lm = com.ibm.tel.wm.LicenseMonitor.getInstance();
@@ -148,6 +147,34 @@ public final class licmon
 		
 		try{
 			lm.exportToCSVFile(filePathAndName);
+		}catch(Throwable t){
+			throw new ServiceException(t);
+		}
+		
+		
+		// pipeline
+		// --- <<IS-END>> ---
+
+                
+	}
+
+
+
+	public static final void writeCsvToFolder (IData pipeline)
+        throws ServiceException
+	{
+		// --- <<IS-START(writeCsvToFolder)>> ---
+		// @sigtype java 3.5
+		// [i] field:0:required folderPath
+		com.ibm.tel.wm.LicenseMonitor lm = com.ibm.tel.wm.LicenseMonitor.getInstance();
+		
+		// pipeline
+		IDataCursor pipelineCursor = pipeline.getCursor();
+			String	folderPath = IDataUtil.getString( pipelineCursor, "folderPath" );
+		pipelineCursor.destroy();
+		
+		try{
+			lm.exportToCSVFileInFolder(folderPath);
 		}catch(Throwable t){
 			throw new ServiceException(t);
 		}

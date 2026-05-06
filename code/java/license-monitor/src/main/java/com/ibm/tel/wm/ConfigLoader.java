@@ -22,32 +22,6 @@ public class ConfigLoader {
 
     private static final ConfigLoader INSTANCE = new ConfigLoader();
 
-    // Static variables initialized at startup
-    private static final String HOSTNAME;
-    private static final String CURRENT_PATH;
-
-    static {
-        // Initialize hostname
-        String tempHostname;
-        try {
-            tempHostname = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-            tempHostname = "unknown-host";
-            JournalLogger.logInfo(JournalLogger.LOG_EXCEPTION, JournalLogger.FAC_LICENSE_MGR,
-                "Warning: Could not determine hostname: " + e.getMessage());
-        }
-        HOSTNAME = tempHostname;
-
-        // Initialize current path
-        CURRENT_PATH = Paths.get("").toAbsolutePath().toString();
-
-        JournalLogger.logInfo(JournalLogger.LOG_EXCEPTION, JournalLogger.FAC_LICENSE_MGR,
-            "Expert Labs License Monitor - System Info:" +
-            "\n    Hostname: " + HOSTNAME +
-            "\n    Current Path: " + CURRENT_PATH
-        );
-    }
-
     private final Properties properties;
     private final long transactionMillisecondsThreshold;
     private final int transactionsHistogramCount;
@@ -145,25 +119,5 @@ public class ConfigLoader {
      */
     public String getProperty(String key, String defaultValue) {
         return properties.getProperty(key, defaultValue);
-    }
-
-    /**
-     * Gets the hostname of the system where the monitor is running.
-     * This value is initialized at class loading time.
-     *
-     * @return the hostname, or "unknown-host" if it could not be determined
-     */
-    public static String getHostname() {
-        return HOSTNAME;
-    }
-
-    /**
-     * Gets the current working directory path where the monitor is running.
-     * This value is initialized at class loading time.
-     *
-     * @return the absolute path of the current working directory
-     */
-    public static String getCurrentPath() {
-        return CURRENT_PATH;
     }
 }
