@@ -1,0 +1,45 @@
+# Exact service namespaces treated as transaction exceptions
+# If ServiceNS exactly matches one of these entries:
+#   TxnExceptionFlag = 1
+# Otherwise:
+#   TxnExceptionFlag = 0
+#
+# One exact service namespace per line.
+# Lines starting with # are comments.
+# Matching is case-sensitive.
+
+wm.tn:receive
+wm.tn.doc.xml:routeXml
+wm.EDIINT:receive
+wm.prt.dispatch:handlePublishedInput
+wm.prt.dispatch:handleSubprocessStart
+wm.prt.dispatch:handleCallActivityStart
+wm.prt.dispatch:handleEDAEvent
+wm.prt.dispatch:handleRequestReply
+wm.prt.dispatch:invokeCallActivityStart
+wm.prt.dispatch:invokeSubprocessStart
+pub.prt.tn:handleBizDoc
+pub.sap.client:invokeTransaction
+pub.sap.client:sendIDoc
+pub.sap.bapi:commit
+pub.sap.transport.ALE:OutboundProcess
+wm.ach.tn.trp:receive
+wm.ach.trp:receive
+wm.ach.trp:receiveStream
+wm.ip.hl7.tn.service:receive
+pub.estd.hipaa:receive
+pub.estd.rosettaNet:receive
+/ws/msh/receive
+wm.ip.rn:receive
+wm.ip.ebxml.MSH:receive
+pub.estd.chem:receive
+wm.b2b.io.core:submit
+wm.b2b.cxml:receiveCXML
+wm.channels.services:gateway
+wm.cloudstreams.listener.event:invokeService
+wm.oftp.gateway.Gw:fetchAndUpdateStatus
+wm.oftp.tn:receiveOftp
+wm.oftp.tn:deliverOftp
+wm.x400.tn:receiveX400
+wm.x400.gateway.Gw:sendAndFetch
+wm.prt.dispatch:handleTransition

@@ -1,0 +1,15 @@
+# Service namespace prefixes treated as non-transaction by default
+# If ServiceNS starts with one of these prefixes:
+#   TxnBaseFlag = 0
+# Otherwise:
+#   TxnBaseFlag = 1
+#
+# One prefix per line.
+# Lines starting with # are comments.
+# Matching is case-sensitive.
+
+wm.
+pub.
+com.
+ws.
+/ws/

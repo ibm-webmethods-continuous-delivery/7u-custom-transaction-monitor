@@ -19,11 +19,12 @@
 # Last Updated: 2026-05-05
 
 # Filter out license monitor services
-^zz\.licmon\..*
+^zz\.licmon[:\.].*
 
 # Filter out webMethods server internal services
-^wm\.server\..*
+^wm\.server[:\.].*
 
 # Add more patterns below as needed
-# ^wm\.dev\..*
+^wm\.dev[:\.].*
+^wm\.broker[:\.].*
 # ^pub\..*
